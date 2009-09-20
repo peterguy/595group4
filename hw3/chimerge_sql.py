@@ -10,7 +10,6 @@ cursor.execute("CREATE TABLE irises (septal_length FLOAT, septal_width FLOAT, pe
 intervals = {}
 interval_indexes = []
 chi2Values = []
-cursor = None
 
 f = open("./bezdekIris.data")
 for tuple in f:
@@ -33,14 +32,34 @@ def fetchIntervals(column):
       data[label][row[0]] = row[2]
   return data
 
-def getIndex(data):
+def createIndex(data):
     keys = data.keys()
     keys.sort(reverse=True)
     return keys
 
+def intervalSum(i):
+  global intervals
+  return intervals[i]['Iris-setosa'] + intervals[i]['Iris-versicolor'] + intervals[i]['Iris-virginica']
+
+def calcChi2(index1, index2):
+  global interval_indexes
+  global intervals
+  E1 = (intervalSum(index1) + 50)/150.0
+  E2 = (intervalSum(index2) + 50)/150.0
+  return (intervals[index1]['Iris-setosa'] - E1)/E1 + (intervals[index1]['Iris-versicolor'] - E1)/E1 + (intervals[index1]['Iris-virginica'] - E1)/E1 + (intervals[index2]['Iris-setosa'] - E2)/E2 + (intervals[index2]['Iris-versicolor'] - E2)/E2 + (intervals[index2]['Iris-virginica'] - E2)/E2  
+
+def chi2Compare(x,y):
+  if x['value']>y['value']:
+    return 1
+  elif x['value']==y['value']:
+    return 0
+  else: # x<y
+    return -1
+
 def merge(index1, index2):
   global interval_indexes
   global intervals
+  global chi2Values
   new_key = index1+","+index2
   intervals[new_key] = {}
   intervals[new_key]['Iris-setosa'] = intervals[index1]['Iris-setosa'] + intervals[index2]['Iris-setosa']
@@ -50,22 +69,22 @@ def merge(index1, index2):
   del(intervals[index1])
   interval_indexes[interval_indexes.index(index1)] = new_key
   interval_indexes.remove(index2)
-  
-def calcChi2(index1, index2):
-  global interval_indexes
-  global intervals
-  E = (intervals[index1]['Iris-setosa'] + )
-  
+  for c in chi2Values:
+    if (c['index1'] == index1 or c['index1'] == index2):
+      c['value'] = calcChi2(new_key, c['index2'])
+      c['index1'] = new_key
+    elif (c['index2'] == index1 or c['index2'] == index2):
+      c['value'] = calcChi2(c['index1'], new_key)
+      c['index2'] = new_key
+  chi2Values.sort(chi2Compare)
 
-def intervalSum(i):
-  global intervals
-  intervals[i]['Iris-setosa'] + intervals[i]['Iris-versicolor'] + intervals[i]['Iris-virginica']
 
 intervals = fetchIntervals('septal_length')
-interval_index = getIndex(intervals)
-print interval_index
-merge(interval_index[0], interval_index[1])
-interval_index = getIndex(intervals)
-print interval_index
-
-
+interval_indexes = createIndex(intervals)
+for index in range(len(interval_indexes)-1):
+  chi2Values.append({'value':calcChi2(interval_indexes[index], interval_indexes[index+1]), 'index1':interval_indexes[index], 'index2':interval_indexes[index+1]})
+chi2Values.sort(chi2Compare)
+while len(interval_indexes) > 5:
+  chival = chi2Values.pop(0)
+  merge(chival['index1'], chival['index2'])
+print interval_indexes
