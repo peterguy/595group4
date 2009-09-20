@@ -11,6 +11,7 @@ intervals = {}
 interval_indexes = []
 chi2Values = []
 
+# Build sqlite table
 f = open("./bezdekIris.data")
 for tuple in f:
 	tuple = tuple.strip()
@@ -19,7 +20,8 @@ for tuple in f:
 		cursor.execute("INSERT INTO irises VALUES ("+values[0]+", "+values[1]+", "+values[2]+", "+values[3]+", \""+values[4]+"\")")
 		connection.commit()
 
-def fetchIntervals(column):
+# Builds intervals from a colum in the sqlite database
+def buildIntervals(column):
   global cursor
   data = {}
   cursor.execute('SELECT class, '+column+', COUNT('+column+') FROM irises GROUP BY class, '+column+' ORDER BY '+column+' DESC')
@@ -32,15 +34,18 @@ def fetchIntervals(column):
       data[label][row[0]] = row[2]
   return data
 
+# Generates a sortable list of indexes into the interval dictionary
 def createIndex(data):
     keys = data.keys()
     keys.sort(reverse=True)
     return keys
 
+# Provides a quick sum of classes in an interval
 def intervalSum(i):
   global intervals
   return intervals[i]['Iris-setosa'] + intervals[i]['Iris-versicolor'] + intervals[i]['Iris-virginica']
 
+# Calulates the chi2 value for two indexes
 def calcChi2(index1, index2):
   global interval_indexes
   global intervals
@@ -48,6 +53,7 @@ def calcChi2(index1, index2):
   E2 = (intervalSum(index2) + 50)/150.0
   return (intervals[index1]['Iris-setosa'] - E1)/E1 + (intervals[index1]['Iris-versicolor'] - E1)/E1 + (intervals[index1]['Iris-virginica'] - E1)/E1 + (intervals[index2]['Iris-setosa'] - E2)/E2 + (intervals[index2]['Iris-versicolor'] - E2)/E2 + (intervals[index2]['Iris-virginica'] - E2)/E2  
 
+# The comparision function used when sorting the chi2 list
 def chi2Compare(x,y):
   if x['value']>y['value']:
     return 1
@@ -56,6 +62,7 @@ def chi2Compare(x,y):
   else: # x<y
     return -1
 
+# Function to merge two indexes into one composite index and recalculate chi2 values for neighbors
 def merge(index1, index2):
   global interval_indexes
   global intervals
@@ -78,13 +85,25 @@ def merge(index1, index2):
       c['index2'] = new_key
   chi2Values.sort(chi2Compare)
 
+# Driver function to start chiMerge for a specific column, will execute until 6 intervals are found
+def doChiMerge(column):
+  global interval_indexes
+  global intervals
+  global chi2Values
+  intervals = {}
+  interval_indexes = []
+  chi2Values = []
+  intervals = buildIntervals(column)
+  interval_indexes = createIndex(intervals)
+  for index in range(len(interval_indexes)-1):
+    chi2Values.append({'value':calcChi2(interval_indexes[index], interval_indexes[index+1]), 'index1':interval_indexes[index], 'index2':interval_indexes[index+1]})
+  chi2Values.sort(chi2Compare)
+  while len(interval_indexes) > 5:
+    chival = chi2Values.pop(0)
+    merge(chival['index1'], chival['index2'])
+  print column+":",interval_indexes
 
-intervals = fetchIntervals('septal_length')
-interval_indexes = createIndex(intervals)
-for index in range(len(interval_indexes)-1):
-  chi2Values.append({'value':calcChi2(interval_indexes[index], interval_indexes[index+1]), 'index1':interval_indexes[index], 'index2':interval_indexes[index+1]})
-chi2Values.sort(chi2Compare)
-while len(interval_indexes) > 5:
-  chival = chi2Values.pop(0)
-  merge(chival['index1'], chival['index2'])
-print interval_indexes
+doChiMerge('septal_length')
+doChiMerge('septal_width')
+doChiMerge('petal_length')
+doChiMerge('petal_width')
