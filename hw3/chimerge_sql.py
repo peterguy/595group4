@@ -45,10 +45,11 @@ def intervalSum(i):
   global intervals
   return intervals[i]['Iris-setosa'] + intervals[i]['Iris-versicolor'] + intervals[i]['Iris-virginica']
 
+# Provides a sum of all counts within a class for the two intervals being compared
 def classSum(index1, index2):
   global intervals
-  #return {'Iris-setosa':intervals[index1]['Iris-setosa'] + intervals[index2]['Iris-setosa'], 'Iris-versicolor':intervals[index1]['Iris-versicolor'] + intervals[index2]['Iris-versicolor'], 'Iris-virginica':intervals[index1]['Iris-virginica'] + intervals[index2]['Iris-virginica']}
-  return {'Iris-setosa':50, 'Iris-versicolor':50, 'Iris-virginica':50}
+  return {'Iris-setosa':intervals[index1]['Iris-setosa'] + intervals[index2]['Iris-setosa'], 'Iris-versicolor':intervals[index1]['Iris-versicolor'] + intervals[index2]['Iris-versicolor'], 'Iris-virginica':intervals[index1]['Iris-virginica'] + intervals[index2]['Iris-virginica']}
+  #return {'Iris-setosa':50, 'Iris-versicolor':50, 'Iris-virginica':50}
   
 # Calulates the chi2 value for two indexes
 # This is horrible I know....
@@ -58,8 +59,8 @@ def calcChi2(index1, index2):
   classSums = classSum(index1, index2)
   intervalSum1 = intervalSum(index1)
   intervalSum2 = intervalSum(index2)
-  #N = float(intervalSum1 + intervalSum2 + classSums['Iris-setosa'] + classSums['Iris-versicolor'] + classSums['Iris-virginica'])
-  N = 150.0
+  N = float(intervalSum1 + intervalSum2 + classSums['Iris-setosa'] + classSums['Iris-versicolor'] + classSums['Iris-virginica'])
+  #N = 150.0
   E11 = (intervalSum1 + classSums['Iris-setosa'])/N
   E12 = (intervalSum1 + classSums['Iris-versicolor'])/N
   E13 = (intervalSum1 + classSums['Iris-virginica'])/N
@@ -101,6 +102,16 @@ def chi2Compare(x,y):
   else: # x<y
     return -1
 
+def printBoundries():
+  global intervals
+  b = [v['boundry'] for v in intervals.values()]
+  b.sort(reverse=True)
+  last = ""
+  for boundry in b:
+     print last+"A > "+boundry
+     last = boundry+" > "
+  print last+"A"
+  
 # Function to merge two indexes into one composite index and recalculate chi2 values for neighbors
 def merge(index1, index2):
   global interval_indexes
@@ -141,7 +152,11 @@ def doChiMerge(column):
   while len(interval_indexes) > 6:
     chival = chi2Values.pop(0)
     merge(chival['index1'], chival['index2'])
-  print column+":",intervals
+  print column
+  for ii in interval_indexes:
+    print ii
+  printBoundries()
+  print "-"*20
 
 doChiMerge('sepal_length')
 doChiMerge('sepal_width')
