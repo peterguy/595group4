@@ -5,7 +5,7 @@ from pysqlite2 import dbapi2 as sqlite
 
 connection = sqlite.connect(':memory:')
 cursor = connection.cursor()
-cursor.execute("CREATE TABLE irises (septal_length FLOAT, septal_width FLOAT, petal_length FLOAT, petal_width FLOAT, class VARCHAR(50))")
+cursor.execute("CREATE TABLE irises (sepal_length FLOAT, sepal_width FLOAT, petal_length FLOAT, petal_width FLOAT, class VARCHAR(50))")
 
 intervals = {}
 interval_indexes = []
@@ -103,7 +103,7 @@ def doChiMerge(column):
     merge(chival['index1'], chival['index2'])
   print column+":",interval_indexes
 
-doChiMerge('septal_length')
-doChiMerge('septal_width')
+doChiMerge('sepal_length')
+doChiMerge('sepal_width')
 doChiMerge('petal_length')
 doChiMerge('petal_width')
