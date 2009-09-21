@@ -30,7 +30,7 @@ def buildIntervals(column):
       label = "%.2f" % row[1]
       data[label][row[0]] = row[2]
     except KeyError:
-      data[label] = {'Iris-setosa':0, 'Iris-versicolor':0, 'Iris-virginica':0}
+      data[label] = {'Iris-setosa':0, 'Iris-versicolor':0, 'Iris-virginica':0, 'boundry':label}
       data[label][row[0]] = row[2]
   return data
 
@@ -51,13 +51,15 @@ def classSum(index1, index2):
   return {'Iris-setosa':50, 'Iris-versicolor':50, 'Iris-virginica':50}
   
 # Calulates the chi2 value for two indexes
+# This is horrible I know....
 def calcChi2(index1, index2):
   global interval_indexes
   global intervals
   classSums = classSum(index1, index2)
   intervalSum1 = intervalSum(index1)
   intervalSum2 = intervalSum(index2)
-  N = float(intervalSum1 + intervalSum2 + classSums['Iris-setosa'] + classSums['Iris-versicolor'] + classSums['Iris-virginica'])
+  #N = float(intervalSum1 + intervalSum2 + classSums['Iris-setosa'] + classSums['Iris-versicolor'] + classSums['Iris-virginica'])
+  N = 150.0
   E11 = (intervalSum1 + classSums['Iris-setosa'])/N
   E12 = (intervalSum1 + classSums['Iris-versicolor'])/N
   E13 = (intervalSum1 + classSums['Iris-virginica'])/N
@@ -109,6 +111,7 @@ def merge(index1, index2):
   intervals[new_key]['Iris-setosa'] = intervals[index1]['Iris-setosa'] + intervals[index2]['Iris-setosa']
   intervals[new_key]['Iris-versicolor'] = intervals[index1]['Iris-versicolor'] + intervals[index2]['Iris-versicolor']
   intervals[new_key]['Iris-virginica'] = intervals[index1]['Iris-virginica'] + intervals[index2]['Iris-virginica']
+  intervals[new_key]['boundry'] = min(intervals[index1]['boundry'], intervals[index2]['boundry'])
   del(intervals[index2])
   del(intervals[index1])
   interval_indexes[interval_indexes.index(index1)] = new_key
@@ -135,10 +138,10 @@ def doChiMerge(column):
   for index in range(len(interval_indexes)-1):
     chi2Values.append({'value':calcChi2(interval_indexes[index], interval_indexes[index+1]), 'index1':interval_indexes[index], 'index2':interval_indexes[index+1]})
   chi2Values.sort(chi2Compare)
-  while len(interval_indexes) > 5:
+  while len(interval_indexes) > 6:
     chival = chi2Values.pop(0)
     merge(chival['index1'], chival['index2'])
-  print column+":",chi2Values
+  print column+":",intervals
 
 doChiMerge('sepal_length')
 doChiMerge('sepal_width')

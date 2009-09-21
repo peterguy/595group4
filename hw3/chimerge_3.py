@@ -1,4 +1,4 @@
-#!/Library/Frameworks/Python.framework/Versions/3.1/bin/python3
+#! /usr/bin/env python
 
 import string
 
