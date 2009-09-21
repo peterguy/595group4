@@ -45,13 +45,50 @@ def intervalSum(i):
   global intervals
   return intervals[i]['Iris-setosa'] + intervals[i]['Iris-versicolor'] + intervals[i]['Iris-virginica']
 
+def classSum(index1, index2):
+  global intervals
+  #return {'Iris-setosa':intervals[index1]['Iris-setosa'] + intervals[index2]['Iris-setosa'], 'Iris-versicolor':intervals[index1]['Iris-versicolor'] + intervals[index2]['Iris-versicolor'], 'Iris-virginica':intervals[index1]['Iris-virginica'] + intervals[index2]['Iris-virginica']}
+  return {'Iris-setosa':50, 'Iris-versicolor':50, 'Iris-virginica':50}
+  
 # Calulates the chi2 value for two indexes
 def calcChi2(index1, index2):
   global interval_indexes
   global intervals
-  E1 = (intervalSum(index1) + 50)/150.0
-  E2 = (intervalSum(index2) + 50)/150.0
-  return (intervals[index1]['Iris-setosa'] - E1)/E1 + (intervals[index1]['Iris-versicolor'] - E1)/E1 + (intervals[index1]['Iris-virginica'] - E1)/E1 + (intervals[index2]['Iris-setosa'] - E2)/E2 + (intervals[index2]['Iris-versicolor'] - E2)/E2 + (intervals[index2]['Iris-virginica'] - E2)/E2  
+  classSums = classSum(index1, index2)
+  intervalSum1 = intervalSum(index1)
+  intervalSum2 = intervalSum(index2)
+  N = float(intervalSum1 + intervalSum2 + classSums['Iris-setosa'] + classSums['Iris-versicolor'] + classSums['Iris-virginica'])
+  E11 = (intervalSum1 + classSums['Iris-setosa'])/N
+  E12 = (intervalSum1 + classSums['Iris-versicolor'])/N
+  E13 = (intervalSum1 + classSums['Iris-virginica'])/N
+  E21 = (intervalSum2 + classSums['Iris-setosa'])/N
+  E22 = (intervalSum2 + classSums['Iris-versicolor'])/N
+  E23 = (intervalSum2 + classSums['Iris-virginica'])/N
+  if E11 < 0.5:
+    A11 = pow(intervals[index1]['Iris-setosa'] - E11, 2)/0.5
+  else:
+    A11 = pow(intervals[index1]['Iris-setosa'] - E11, 2)/E11
+  if E12 < 0.5:
+    A12 = pow(intervals[index1]['Iris-versicolor'] - E12, 2)/0.5
+  else:
+    A12 = pow(intervals[index1]['Iris-versicolor'] - E12, 2)/E12
+  if E13 < 0.5:
+    A13 = pow(intervals[index1]['Iris-virginica'] - E13, 2)/0.5
+  else:
+    A13 = pow(intervals[index1]['Iris-virginica'] - E13, 2)/E13
+  if E21 < 0.5:
+    A21 = pow(intervals[index2]['Iris-setosa'] - E21, 2)/0.5
+  else:
+    A21 = pow(intervals[index2]['Iris-setosa'] - E21, 2)/E21
+  if E22 < 0.5:
+    A22 = pow(intervals[index2]['Iris-versicolor'] - E22, 2)/0.5
+  else:
+    A22 = pow(intervals[index2]['Iris-versicolor'] - E22, 2)/E22
+  if E23 < 0.5:
+    A23 = pow(intervals[index2]['Iris-virginica'] - E23, 2)/0.5
+  else:
+    A23 = pow(intervals[index2]['Iris-virginica'] - E23, 2)/E23 
+  return A11 + A12 + A13 + A21 + A22 + A23 
 
 # The comparision function used when sorting the chi2 list
 def chi2Compare(x,y):
@@ -101,7 +138,7 @@ def doChiMerge(column):
   while len(interval_indexes) > 5:
     chival = chi2Values.pop(0)
     merge(chival['index1'], chival['index2'])
-  print column+":",interval_indexes
+  print column+":",chi2Values
 
 doChiMerge('septal_length')
 doChiMerge('septal_width')
